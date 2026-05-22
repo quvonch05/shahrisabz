@@ -873,3 +873,62 @@ window.addEventListener('resize', () => {
         if (overlay) overlay.classList.remove('active');
     }
 });
+// ============================================
+// GOOGLE ORQALI AUTH - Yangi qo'shiladi
+// ============================================
+
+async function signInWithGoogle() {
+    console.log('🔵 Google auth boshlandi...');
+    
+    // Internet tekshirish
+    if (!navigator.onLine) {
+        showToast('Internet ulanishi yo\'q!', 'error');
+        return;
+    }
+    
+    try {
+        showToast('Google orqali ulanish...', 'info');
+        
+        // Supabase orqali Google auth
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                // Sayt manziliga qaytish
+                redirectTo: window.location.href,
+                // Qo'shimcha sozlamalar
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent',
+                }
+            }
+        });
+        
+        if (error) {
+            console.error('Google auth xato:', error);
+            throw error;
+        }
+        
+        // Muvaffaqiyatli - Google sahifasiga yo'naltiradi
+        console.log('✅ Google auth URL:', data?.url);
+        
+    } catch (err) {
+        console.error('❌ Google auth xato:', err);
+        
+        let msg = 'Google orqali ulanishda xato';
+        
+        if (err.message) {
+            msg = err.message;
+        }
+        
+        // Xatolarni tarjima qilish
+        if (msg.includes('provider is not enabled')) {
+            msg = 'Google auth Supabase da yoqilmagan!';
+        } else if (msg.includes('redirect')) {
+            msg = 'Redirect URL noto\'g\'ri sozlangan!';
+        } else if (msg.includes('network') || msg.includes('fetch')) {
+            msg = 'Internet yoki server bilan muammo!';
+        }
+        
+        showToast(msg, 'error');
+    }
+}
