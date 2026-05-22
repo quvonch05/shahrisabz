@@ -30,6 +30,46 @@
             <div class="auth-tabs">
     <button class="tab-btn active" onclick="switchTab('login', this)">Kirish</button>
     <button class="tab-btn" onclick="switchTab('register', this)">Ro'yxatdan o'tish</button>
+                <!-- REGISTER FORM ichida -->
+<div id="register-form" class="auth-form">
+    <!-- Name input -->
+    <div class="input-group">
+        <i class="fas fa-user"></i>
+        <input type="text" id="register-name" placeholder="Ismingiz">
+    </div>
+    
+    <!-- Email input -->
+    <div class="input-group">
+        <i class="fas fa-envelope"></i>
+        <input type="email" id="register-email" placeholder="Email" autocomplete="email">
+    </div>
+    
+    <!-- Password input -->
+    <div class="input-group">
+        <i class="fas fa-lock"></i>
+        <input type="password" id="register-password" placeholder="Parol (kamida 6 ta belgi)" autocomplete="new-password">
+        <button class="toggle-password" onclick="togglePassword('register-password')">
+            <i class="fas fa-eye"></i>
+        </button>
+    </div>
+    
+    <!-- Ro'yxatdan o'tish tugmasi -->
+    <button class="auth-btn" onclick="signUp()">
+        <i class="fas fa-user-plus"></i> Ro'yxatdan o'tish
+    </button>
+    
+    <!-- Xato xabari -->
+    <p class="auth-error" id="register-error"></p>
+    
+    <!-- ⭐ GOOGLE TUGMASI - SHU YERGA QO'SHING -->
+    <div class="auth-divider">
+        <span>yoki</span>
+    </div>
+    
+    <button class="social-btn google" onclick="signInWithGoogle()">
+        <i class="fab fa-google"></i> Google orqali ro'yxatdan o'tish
+    </button>
+</div>
 </div>
 
             <!-- LOGIN FORM -->
