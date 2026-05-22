@@ -1,8 +1,8 @@
 // ============================================
-// SUPABASE SOZLAMALARI
+// SUPABASE SOZLAMALARI - O'ZINGIZNIKIRI!
 // ============================================
-const SUPABASE_URL = 'https://xmxlqtnmljjhnlxxnymn.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteGxxdG5tbGpqaG5seHhueW1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTczNjQsImV4cCI6MjA5NTAzMzM2NH0.96GvuXxaiiMjyDb7zwbJa-rDg56La2sNFDeNgqCov3I'; // ← O'ZGARTIRING
+const SUPABASE_URL = 'https://xmlqtnmljjhnbxnymn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIs...'; // ← ANON KEY NI QO'YING!
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -19,135 +19,312 @@ let animationsEnabled = true;
 // ============================================
 window.addEventListener('load', () => {
     setTimeout(() => {
-        document.getElementById('loading-screen').classList.add('hidden');
+        const loader = document.getElementById('loading-screen');
+        if (loader) {
+            loader.classList.add('fade-out');
+            setTimeout(() => loader.classList.add('hidden'), 500);
+        }
         checkSession();
-    }, 1500);
+    }, 1000);
 });
 
 // ============================================
 // AUTH TEKSHIRUV
 // ============================================
 async function checkSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        currentUser = session.user;
-        showChat();
-        loadUserProfile();
-    } else {
+    try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        
+        if (error) throw error;
+        
+        if (session) {
+            currentUser = session.user;
+            showChat();
+            loadUserProfile();
+        } else {
+            showAuth();
+        }
+    } catch (err) {
+        console.error('Session tekshirishda xato:', err);
         showAuth();
     }
 }
 
 function showAuth() {
-    document.getElementById('auth-section').classList.remove('hidden');
-    document.getElementById('chat-section').classList.add('hidden');
+    const authSection = document.getElementById('auth-section');
+    const chatSection = document.getElementById('chat-section');
+    
+    if (authSection) authSection.classList.remove('hidden');
+    if (chatSection) chatSection.classList.add('hidden');
 }
 
 function showChat() {
-    document.getElementById('auth-section').classList.add('hidden');
-    document.getElementById('chat-section').classList.remove('hidden');
+    const authSection = document.getElementById('auth-section');
+    const chatSection = document.getElementById('chat-section');
+    
+    if (authSection) authSection.classList.add('hidden');
+    if (chatSection) chatSection.classList.remove('hidden');
+    
     loadMessages();
     subscribeToMessages();
 }
 
 // ============================================
-// AUTH TABS
+// AUTH TABS - TO'G'RILANGAN!
 // ============================================
-function switchTab(tab) {
+function switchTab(tab, clickedBtn) {
+    console.log('Tab o\'zgardi:', tab);
+    
+    // Barcha tablarni o'chirish
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
     
-    event.target.classList.add('active');
-    document.getElementById(tab + '-form').classList.add('active');
+    // Bosilgan tugmani aktiv qilish
+    if (clickedBtn) {
+        clickedBtn.classList.add('active');
+    } else {
+        // Agar clickedBtn yo'q bo'lsa, birinchi tab ni topish
+        const tabs = document.querySelectorAll('.tab-btn');
+        if (tabs.length > 0) {
+            if (tab === 'login') tabs[0].classList.add('active');
+            else if (tab === 'register' && tabs.length > 1) tabs[1].classList.add('active');
+        }
+    }
+    
+    // Formani ko'rsatish
+    const form = document.getElementById(tab + '-form');
+    if (form) form.classList.add('active');
+    
+    // Xatolarni tozalash
+    const loginError = document.getElementById('login-error');
+    const registerError = document.getElementById('register-error');
+    if (loginError) loginError.textContent = '';
+    if (registerError) registerError.textContent = '';
 }
 
+// ============================================
+// PASSWORD TOGGLE
+// ============================================
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
-    const icon = event.target.querySelector('i') || event.target;
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+    
+    if (!input) return;
     
     if (input.type === 'password') {
         input.type = 'text';
-        icon.classList.replace('fa-eye', 'fa-eye-slash');
+        if (icon) icon.classList.replace('fa-eye', 'fa-eye-slash');
     } else {
         input.type = 'password';
-        icon.classList.replace('fa-eye-slash', 'fa-eye');
+        if (icon) icon.classList.replace('fa-eye-slash', 'fa-eye');
     }
 }
 
 // ============================================
-// AUTH FUNKSIYALARI
+// AUTH FUNKSIYALARI - TO'G'RILANGAN!
 // ============================================
 async function signUp() {
-    const name = document.getElementById('register-name').value.trim();
-    const email = document.getElementById('register-email').value.trim();
-    const password = document.getElementById('register-password').value;
+    console.log('📝 signUp boshlandi...');
+    
+    const nameInput = document.getElementById('register-name');
+    const emailInput = document.getElementById('register-email');
+    const passwordInput = document.getElementById('register-password');
     const errorEl = document.getElementById('register-error');
-
+    
+    // Elementlar mavjudligini tekshirish
+    if (!nameInput || !emailInput || !passwordInput) {
+        console.error('Input elementlari topilmadi!');
+        showToast('Sahifa to\'liq yuklanmagan, qayta urinib ko\'ring', 'error');
+        return;
+    }
+    
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    
+    console.log('Name:', name, 'Email:', email, 'Password uzunligi:', password.length);
+    
+    // Validatsiya
     if (!name || !email || !password) {
-        errorEl.textContent = 'Barcha maydonlarni to\'ldiring!';
+        if (errorEl) errorEl.textContent = 'Barcha maydonlarni to\'ldiring!';
+        showToast('Barcha maydonlarni to\'ldiring!', 'error');
         return;
     }
-
+    
     if (password.length < 6) {
-        errorEl.textContent = 'Parol kamida 6 ta belgi bo\'lishi kerak!';
+        if (errorEl) errorEl.textContent = 'Parol kamida 6 ta belgi bo\'lishi kerak!';
+        showToast('Parol kamida 6 ta belgi bo\'lishi kerak!', 'error');
         return;
     }
-
+    
+    // Email formatini tekshirish
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        if (errorEl) errorEl.textContent = 'Noto\'g\'ri email formati!';
+        showToast('Noto\'g\'ri email formati!', 'error');
+        return;
+    }
+    
     try {
+        console.log('Supabase auth.signUp chaqirilmoqda...');
+        
         const { data, error } = await supabaseClient.auth.signUp({
-            email,
-            password,
+            email: email,
+            password: password,
             options: {
-                data: { full_name: name }
+                data: { 
+                    full_name: name,
+                    avatar_url: null
+                },
+                emailRedirectTo: window.location.origin
             }
         });
-
-        if (error) throw error;
-
-        showToast('Tasdiqlash xati yuborildi!', 'success');
-        switchTab('login');
+        
+        console.log('Supabase javob:', { data, error });
+        
+        if (error) {
+            throw error;
+        }
+        
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+            // Foydalanuvchi allaqachon mavjud
+            if (errorEl) errorEl.textContent = 'Bu email allaqachon ro\'yxatdan o\'tgan!';
+            showToast('Bu email allaqachon ro\'yxatdan o\'tgan!', 'error');
+            return;
+        }
+        
+        // Muvaffaqiyatli!
+        console.log('✅ Ro\'yxatdan o\'tish muvaffaqiyatli:', data);
+        
+        if (errorEl) errorEl.textContent = '';
+        showToast('Tasdiqlash xati emailga yuborildi!', 'success');
+        
+        // Login tab'ga o'tish
+        setTimeout(() => {
+            const loginTab = document.querySelectorAll('.tab-btn')[0];
+            if (loginTab) switchTab('login', loginTab);
+        }, 2000);
+        
     } catch (err) {
-        errorEl.textContent = err.message;
-        showToast(err.message, 'error');
+        console.error('❌ signUp xato:', err);
+        
+        let errorMessage = err.message || 'Noma\'lum xato yuz berdi';
+        
+        // Mashhur xatolarni tarjima qilish
+        if (errorMessage.includes('User already registered')) {
+            errorMessage = 'Bu email allaqachon ro\'yxatdan o\'tgan!';
+        } else if (errorMessage.includes('Password should be')) {
+            errorMessage = 'Parol juda oddiy, kuchliroq parol tanlang!';
+        } else if (errorMessage.includes('Unable to validate')) {
+            errorMessage = 'Email manzili noto\'g\'ri!';
+        } else if (errorMessage.includes('network')) {
+            errorMessage = 'Internet ulanishi yo\'q!';
+        }
+        
+        if (errorEl) errorEl.textContent = errorMessage;
+        showToast(errorMessage, 'error');
     }
 }
 
 async function signIn() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
+    console.log('🔐 signIn boshlandi...');
+    
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
     const errorEl = document.getElementById('login-error');
-
-    if (!email || !password) {
-        errorEl.textContent = 'Email va parolni kiriting!';
+    
+    if (!emailInput || !passwordInput) {
+        console.error('Login inputlari topilmadi!');
         return;
     }
-
+    
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    
+    console.log('Email:', email, 'Password uzunligi:', password.length);
+    
+    if (!email || !password) {
+        if (errorEl) errorEl.textContent = 'Email va parolni kiriting!';
+        showToast('Email va parolni kiriting!', 'error');
+        return;
+    }
+    
     try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email,
-            password
+            email: email,
+            password: password
         });
-
+        
         if (error) throw error;
-
+        
+        console.log('✅ Login muvaffaqiyatli:', data);
+        
         currentUser = data.user;
-        showToast('Xush kelibsiz!', 'success');
+        
+        if (errorEl) errorEl.textContent = '';
+        showToast('Xush kelibsiz, ' + (data.user.user_metadata?.full_name || email) + '!', 'success');
+        
         showChat();
         loadUserProfile();
+        
     } catch (err) {
-        errorEl.textContent = err.message;
-        showToast(err.message, 'error');
+        console.error('❌ signIn xato:', err);
+        
+        let errorMessage = err.message || 'Login xatosi';
+        
+        if (errorMessage.includes('Invalid login')) {
+            errorMessage = 'Email yoki parol noto\'g\'ri!';
+        } else if (errorMessage.includes('Email not confirmed')) {
+            errorMessage = 'Email tasdiqlanmagan, pochtangizni tekshiring!';
+        } else if (errorMessage.includes('network')) {
+            errorMessage = 'Internet ulanishi yo\'q!';
+        }
+        
+        if (errorEl) errorEl.textContent = errorMessage;
+        showToast(errorMessage, 'error');
     }
 }
 
 async function signOut() {
-    await supabaseClient.auth.signOut();
-    currentUser = null;
-    if (realtimeChannel) {
-        supabaseClient.removeChannel(realtimeChannel);
+    try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
+        
+        currentUser = null;
+        
+        if (realtimeChannel) {
+            supabaseClient.removeChannel(realtimeChannel);
+            realtimeChannel = null;
+        }
+        
+        showToast('Tizimdan chiqdingiz', 'info');
+        showAuth();
+        
+    } catch (err) {
+        console.error('SignOut xato:', err);
+        showToast('Chiqishda xato: ' + err.message, 'error');
     }
-    showToast('Tizimdan chiqdingiz', 'info');
-    showAuth();
+}
+
+// ============================================
+// SOCIAL LOGIN
+// ============================================
+async function socialLogin(provider) {
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+            provider: provider,
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        
+        if (error) throw error;
+        
+    } catch (err) {
+        console.error('Social login xato:', err);
+        showToast('Social login xato: ' + err.message, 'error');
+    }
 }
 
 // ============================================
@@ -156,83 +333,97 @@ async function signOut() {
 function loadUserProfile() {
     if (!currentUser) return;
     
-    document.getElementById('user-name').textContent = 
-        currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
-    document.getElementById('user-email').textContent = currentUser.email;
+    const nameEl = document.getElementById('user-name');
+    const emailEl = document.getElementById('user-email');
+    const avatarEl = document.getElementById('user-avatar');
     
-    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email)}&background=3ecf8e&color=fff`;
-    document.getElementById('user-avatar').src = avatarUrl;
+    const displayName = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+    const email = currentUser.email;
+    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3ecf8e&color=fff&size=128`;
+    
+    if (nameEl) nameEl.textContent = displayName;
+    if (emailEl) emailEl.textContent = email;
+    if (avatarEl) avatarEl.src = avatarUrl;
 }
 
 // ============================================
 // XABARLAR
 // ============================================
 async function loadMessages() {
-    const { data: messages, error } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: true });
-
-    if (error) {
+    try {
+        const { data: messages, error } = await supabaseClient
+            .from('messages')
+            .select('*')
+            .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        
+        allMessages = messages || [];
+        renderMessages();
+        
+    } catch (err) {
+        console.error('Xabarlarni yuklashda xato:', err);
         showToast('Xabarlarni yuklashda xato', 'error');
-        return;
     }
-
-    allMessages = messages;
-    renderMessages();
 }
 
 function renderMessages(filter = '') {
     const container = document.getElementById('messages-container');
+    if (!container) return;
+    
     container.innerHTML = '';
-
+    
     const filtered = filter 
         ? allMessages.filter(m => m.content.toLowerCase().includes(filter.toLowerCase()))
         : allMessages;
-
+    
     if (filtered.length === 0) {
         container.innerHTML = `
             <div class="welcome-message">
                 <i class="fas fa-comment-slash"></i>
                 <h3>Xabarlar yo'q</h3>
+                <p>Birinchi xabaringizni yozing</p>
             </div>
         `;
         return;
     }
-
+    
     filtered.forEach(msg => displayMessage(msg));
     scrollToBottom();
 }
 
 function displayMessage(msg) {
     const container = document.getElementById('messages-container');
+    if (!container) return;
+    
     const isOwn = currentUser && msg.user_id === currentUser.id;
     
     const div = document.createElement('div');
     div.className = `message ${isOwn ? 'own' : 'other'}`;
-    if (animationsEnabled) div.style.animation = 'messageAppear 0.3s ease';
     
     const time = new Date(msg.created_at).toLocaleTimeString('uz-UZ', {
         hour: '2-digit',
         minute: '2-digit'
     });
-
-    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender_name || 'User')}&background=${isOwn ? '3ecf8e' : '667eea'}&color=fff`;
-
+    
+    const senderName = msg.sender_name || 'Noma\'lum';
+    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=${isOwn ? '3ecf8e' : '667eea'}&color=fff&size=64`;
+    
     div.innerHTML = `
         <div class="message-header">
-            <img src="${avatarUrl}" class="message-avatar" alt="">
-            <span class="message-name">${msg.sender_name || 'Noma\'lum'}</span>
+            <img src="${avatarUrl}" class="message-avatar" alt="" loading="lazy">
+            <span class="message-name">${escapeHtml(senderName)}</span>
             <span class="message-time">${time}</span>
         </div>
         <div class="message-content">${escapeHtml(msg.content)}</div>
         ${isOwn ? '<div class="message-status"><i class="fas fa-check-double"></i> Yuborildi</div>' : ''}
     `;
-
+    
     container.appendChild(div);
 }
 
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -242,8 +433,10 @@ function escapeHtml(text) {
 // REALTIME
 // ============================================
 function subscribeToMessages() {
-    if (realtimeChannel) supabaseClient.removeChannel(realtimeChannel);
-
+    if (realtimeChannel) {
+        supabaseClient.removeChannel(realtimeChannel);
+    }
+    
     realtimeChannel = supabaseClient
         .channel('public:messages')
         .on('postgres_changes', 
@@ -254,16 +447,14 @@ function subscribeToMessages() {
                 displayMessage(msg);
                 scrollToBottom();
                 
-                // Typing indicator ni yashirish
-                document.getElementById('typing-status').textContent = 'Jonli';
-                
-                // Agar xabar o'zimiznikimas, bildirishnoma
                 if (currentUser && msg.user_id !== currentUser.id) {
                     showToast(`${msg.sender_name}: ${msg.content.substring(0, 30)}...`, 'info');
                 }
             }
         )
-        .subscribe();
+        .subscribe((status) => {
+            console.log('Realtime status:', status);
+        });
 }
 
 // ============================================
@@ -271,60 +462,76 @@ function subscribeToMessages() {
 // ============================================
 async function sendMessage() {
     const input = document.getElementById('message-input');
-    const content = input.value.trim();
+    if (!input) return;
     
+    const content = input.value.trim();
     if (!content) return;
+    
     if (!currentUser) {
         showToast('Avval tizimga kiring!', 'error');
         return;
     }
-
-    // Typing indicator
-    document.getElementById('typing-status').textContent = 'Yozmoqda...';
-
-    const { error } = await supabaseClient
-        .from('messages')
-        .insert([{
-            content,
-            user_id: currentUser.id,
-            sender_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0]
-        }]);
-
-    if (error) {
-        showToast('Xabar yuborishda xato', 'error');
-        return;
+    
+    const senderName = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+    
+    try {
+        const { error } = await supabaseClient
+            .from('messages')
+            .insert([{
+                content: content,
+                user_id: currentUser.id,
+                sender_name: senderName
+            }]);
+        
+        if (error) throw error;
+        
+        input.value = '';
+        
+    } catch (err) {
+        console.error('Xabar yuborishda xato:', err);
+        showToast('Xabar yuborishda xato: ' + err.message, 'error');
     }
-
-    input.value = '';
-    document.getElementById('typing-status').textContent = 'Jonli';
 }
 
 // Enter bilan yuborish
-document.getElementById('message-input')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
+document.addEventListener('DOMContentLoaded', () => {
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
 });
 
 // ============================================
 // EMOJI
 // ============================================
 function toggleEmoji() {
-    document.getElementById('emoji-picker').classList.toggle('hidden');
+    const picker = document.getElementById('emoji-picker');
+    if (picker) picker.classList.toggle('hidden');
 }
 
-document.getElementById('emoji-picker')?.addEventListener('click', (e) => {
-    if (e.target.tagName === 'SPAN') {
-        const input = document.getElementById('message-input');
-        input.value += e.target.textContent;
-        input.focus();
-    }
-});
-
-// Tashqariga bosilganda emoji picker yopilsin
 document.addEventListener('click', (e) => {
     const picker = document.getElementById('emoji-picker');
     const btn = document.querySelector('.emoji-btn');
-    if (picker && !picker.contains(e.target) && !btn.contains(e.target)) {
+    
+    if (picker && !picker.contains(e.target) && btn && !btn.contains(e.target)) {
         picker.classList.add('hidden');
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const emojiPicker = document.getElementById('emoji-picker');
+    if (emojiPicker) {
+        emojiPicker.addEventListener('click', (e) => {
+            if (e.target.tagName === 'SPAN') {
+                const input = document.getElementById('message-input');
+                if (input) {
+                    input.value += e.target.textContent;
+                    input.focus();
+                }
+            }
+        });
     }
 });
 
@@ -332,19 +539,30 @@ document.addEventListener('click', (e) => {
 // QIDIRISH
 // ============================================
 function searchMessages() {
-    document.getElementById('search-bar').classList.remove('hidden');
-    document.getElementById('search-input').focus();
+    const searchBar = document.getElementById('search-bar');
+    if (searchBar) {
+        searchBar.classList.remove('hidden');
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) searchInput.focus();
+    }
 }
 
 function closeSearch() {
-    document.getElementById('search-bar').classList.add('hidden');
-    document.getElementById('search-input').value = '';
-    renderMessages();
+    const searchBar = document.getElementById('search-bar');
+    if (searchBar) searchBar.classList.add('hidden');
+    
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.value = '';
+        renderMessages();
+    }
 }
 
 function filterMessages() {
-    const query = document.getElementById('search-input').value;
-    renderMessages(query);
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        renderMessages(searchInput.value);
+    }
 }
 
 // ============================================
@@ -354,13 +572,34 @@ function showSection(section) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     
-    document.getElementById(section + '-area').classList.add('active');
-    event.currentTarget.classList.add('active');
+    const sectionEl = document.getElementById(section + '-area');
+    if (sectionEl) sectionEl.classList.add('active');
+    
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
 }
 
 function toggleSidebar() {
-    document.querySelector('.sidebar').classList.toggle('open');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    
+    if (sidebar) sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
 }
+
+// Mobile'da sidebar tashqariga bosilganda yopish
+document.addEventListener('click', (e) => {
+    const sidebar = document.querySelector('.sidebar');
+    const menuBtn = document.querySelector('.menu-btn');
+    
+    if (window.innerWidth <= 768 && 
+        sidebar && sidebar.classList.contains('open') &&
+        !sidebar.contains(e.target) && 
+        menuBtn && !menuBtn.contains(e.target)) {
+        toggleSidebar();
+    }
+});
 
 // ============================================
 // SETTINGS
@@ -373,15 +612,19 @@ function toggleDarkMode() {
 }
 
 function toggleAnimations() {
-    animationsEnabled = document.getElementById('animations').checked;
+    const checkbox = document.getElementById('animations');
+    animationsEnabled = checkbox ? checkbox.checked : true;
     localStorage.setItem('animations', animationsEnabled);
 }
 
 function editProfile() {
-    const name = prompt('Yangi ismingiz:', currentUser?.user_metadata?.full_name || '');
-    if (name) {
-        // Supabase'da yangilash
+    const currentName = currentUser?.user_metadata?.full_name || '';
+    const name = prompt('Yangi ismingiz:', currentName);
+    
+    if (name && name.trim()) {
+        // Profilni yangilash (agar kerak bo'lsa)
         showToast('Profil yangilandi', 'success');
+        loadUserProfile();
     }
 }
 
@@ -390,6 +633,8 @@ function editProfile() {
 // ============================================
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
+    if (!container) return;
+    
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
@@ -399,13 +644,15 @@ function showToast(message, type = 'info') {
         info: 'fa-info-circle'
     };
     
-    toast.innerHTML = `<i class="fas ${icons[type]}"></i> ${message}`;
+    toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${message}`;
     container.appendChild(toast);
     
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => {
+            if (toast.parentNode) toast.remove();
+        }, 300);
     }, 3000);
 }
 
@@ -414,12 +661,23 @@ function showToast(message, type = 'info') {
 // ============================================
 function scrollToBottom() {
     const container = document.getElementById('messages-container');
-    if (container) container.scrollTop = container.scrollHeight;
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+    }
 }
 
 function clearChat() {
     if (confirm('Barcha xabarlar o\'chirilsinmi? (Faqat sizning ko\'rishingizdan)')) {
-        document.getElementById('messages-container').innerHTML = '';
+        const container = document.getElementById('messages-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="welcome-message">
+                    <i class="fas fa-hand-wave"></i>
+                    <h3>Xush kelibsiz!</h3>
+                    <p>Birinchi xabaringizni yozing</p>
+                </div>
+            `;
+        }
         showToast('Chat tozalandi', 'info');
     }
 }
@@ -428,6 +686,8 @@ function clearChat() {
 // AUTH HOLATINI KUZATISH
 // ============================================
 supabaseClient.auth.onAuthStateChange((event, session) => {
+    console.log('Auth holati:', event);
+    
     if (event === 'SIGNED_IN' && session) {
         currentUser = session.user;
         showChat();
@@ -441,83 +701,30 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 // ============================================
 // SAQLANGAN SOZLAMALARNI YUKLASH
 // ============================================
-window.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
+    // Dark mode
     if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark-mode');
-        document.getElementById('dark-mode').checked = true;
+        const darkModeCheckbox = document.getElementById('dark-mode');
+        if (darkModeCheckbox) darkModeCheckbox.checked = true;
     }
     
+    // Animations
     if (localStorage.getItem('animations') === 'false') {
         animationsEnabled = false;
-        document.getElementById('animations').checked = false;
-    }
-});
-// ... avvalgi kod ...
-
-// ============================================
-// SIDEBAR TOGGLE (Mobile)
-// ============================================
-function toggleSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-    
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-}
-
-// Mobile'da sidebar tashqariga bosilganda yopish
-document.addEventListener('click', (e) => {
-    const sidebar = document.querySelector('.sidebar');
-    const menuBtn = document.querySelector('.menu-btn');
-    
-    if (window.innerWidth <= 768 && 
-        sidebar.classList.contains('open') &&
-        !sidebar.contains(e.target) && 
-        !menuBtn.contains(e.target)) {
-        toggleSidebar();
+        const animCheckbox = document.getElementById('animations');
+        if (animCheckbox) animCheckbox.checked = false;
     }
 });
 
 // ============================================
-// SOCIAL LOGIN (Qo'llash)
+// RESPONSIVE HANDLERS
 // ============================================
-async function socialLogin(provider) {
-    try {
-        const { data, error } = await supabaseClient.auth.signInWithOAuth({
-            provider: provider,
-            options: {
-                redirectTo: window.location.origin
-            }
-        });
-        
-        if (error) throw error;
-    } catch (err) {
-        showToast(err.message, 'error');
-    }
-}
-
-// ============================================
-// ORIENTATION CHANGE (Mobile)
-// ============================================
-window.addEventListener('orientationchange', () => {
-    // 100ms kutish va scroll to'g'rilash
-    setTimeout(() => {
-        scrollToBottom();
-        document.querySelector('.sidebar').classList.remove('open');
-    }, 100);
-});
-
-// ============================================
-// RESIZE HANDLER
-// ============================================
-let resizeTimer;
 window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-        // Desktop'ga qaytganida sidebar ochiq qolmasin
-        if (window.innerWidth > 768) {
-            document.querySelector('.sidebar').classList.remove('open');
-            document.querySelector('.sidebar-overlay').classList.remove('active');
-        }
-    }, 250);
+    if (window.innerWidth > 768) {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (sidebar) sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+    }
 });
