@@ -1,8 +1,8 @@
 // ============================================
 // SUPABASE SOZLAMALARI - O'ZINGIZNIKIRI!
 // ============================================
-const SUPABASE_URL = 'https://xmlqtnmljjhnbxnymn.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIs...'; // ← ANON KEY NI QO'YING!
+const SUPABASE_URL = 'https://xmxlqtnmljjhnlxxnymn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteGxxdG5tbGpqaG5seHhueW1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTczNjQsImV4cCI6MjA5NTAzMzM2NH0.96GvuXxaiiMjyDb7zwbJa-rDg56La2sNFDeNgqCov3I'; // ← ANON KEY NI QO'YING!
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
